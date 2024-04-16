@@ -1,60 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto'; // Import Chart.js
+import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-const MyChartComponent = () => {
-  const [data, setData] = useState({ x: [], y: [] });
-  const chartRef = useRef(null);
+function ChartComponent() {
+  const [xData, setXData] = useState([]);
+  const [yData, setYData] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const responseX = await fetch('https://retoolapi.dev/o5zMs5/data');
-        const responseY = await fetch('https://retoolapi.dev/gDa8uC/data');
-        const dataX = await responseX.json();
-        const dataY = await responseY.json();
+    fetch('https://retoolapi.dev/o5zMs5/data')
+      .then(response => response.json())
+      .then(data => {
+        setXData(data.slice(0, 50));
+      })
+      .catch(error => console.error('Error fetching x-axis data:', error));
 
-        // Assuming dataX and dataY are arrays of values
-        setData({ x: dataX.slice(0, 50), y: dataY.slice(0, 50) });
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
+    fetch('https://retoolapi.dev/gDa8uC/data')
+      .then(response => response.json())
+      .then(data => {
+        setYData(data.slice(0, 50));
+      })
+      .catch(error => console.error('Error fetching y-axis data:', error));
   }, []);
 
-  useEffect(() => {
-    // Render chart when data changes
-    if (data.x.length > 0 && data.y.length > 0) {
-      if (chartRef.current) {
-        // Update existing chart data
-        chartRef.current.data.labels = data.x;
-        chartRef.current.data.datasets[0].data = data.y;
-        chartRef.current.update();
-      } else {
-        // Create new chart
-        const ctx = document.getElementById('myChart');
-        chartRef.current = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: data.x,
-            datasets: [{
-              label: 'Data',
-              data: data.y,
-              borderColor: 'blue',
-              borderWidth: 1,
-              fill: false
-            }]
-          },
-          options: {
-            // Add options here if needed
-          }
-        });
-      }
-    }
-  }, [data]);
+  
+const combinedData = xData.slice(0, 50).map((item, index) => ({
+  x: item.Label, 
+  y: item.RandomNumber, 
+}));
 
-  return <canvas id="myChart" width="400" height="400"></canvas>;
-};
 
-export default MyChartComponent;
+  return (
+    <div style={{ width: '100%', height: 400 }}>
+      <ResponsiveContainer>
+        <LineChart data={combinedData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="x" />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Line type="monotone" dataKey="y" stroke="#8884d8" />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export default ChartComponent;
